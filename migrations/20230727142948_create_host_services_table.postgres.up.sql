@@ -5,6 +5,7 @@ create table host_services (
                           active integer default 1,
                           schedule_number integer default 3,
                           schedule_unit varchar default 'm',
+                          status varchar default 'pending',
                           last_check timestamp default '0001-01-01 00:00:01',
                           created_at timestamp default current_timestamp,
                           updated_at timestamp default current_timestamp,
