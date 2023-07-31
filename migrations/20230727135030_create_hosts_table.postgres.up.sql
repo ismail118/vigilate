@@ -1,5 +1,5 @@
 create table hosts (
-    id integer,
+    id serial,
     host_name varchar(255),
     canonical_name varchar(255),
     url varchar(255),

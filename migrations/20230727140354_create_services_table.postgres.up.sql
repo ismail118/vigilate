@@ -1,5 +1,5 @@
 create table services (
-                          id integer,
+                          id serial,
                           service_name varchar(255),
                           active integer default 1,
                           icon varchar(255),

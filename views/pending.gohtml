@@ -27,17 +27,41 @@
 
             <table class="table table-condensed table-striped">
                 <thead>
-                <tr>
-                    <th>Host</th>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th>Message</th>
-                </tr>
+                    <tr>
+                        <th>Host</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td colspan="5">No services</td>
-                </tr>
+                {{if len(hosts) > 0}}
+                    {{range hosts}}
+                        {{hostName := .HostName}}
+                        {{range .HostServices}}
+                        <tr>
+                            <td>
+                                <a href="/admin/host/{{.HostID}}#pending-content">{{hostName}}</a>
+                            </td>
+                            <td>{{.Service.ServiceName}}</td>
+                            <td>
+                                <span class="badge bg-secondary-dark">{{.Status}}</span>
+                            </td>
+                            <td>
+                                {{if .Active == 1}}
+                                <span class="badge bg-success">Active</span>
+                                {{else}}
+                                <span class="badge bg-danger">Inactive</span>
+                                {{end}}
+                            </td>
+                        </tr>
+                        {{end}}
+                    {{end}}
+                {{else}}
+                    <tr>
+                        <td colspan="4" class="align-middle">No Service</td>
+                    </tr>
+                {{end}}
                 </tbody>
             </table>
         </div>

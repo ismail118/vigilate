@@ -1,5 +1,5 @@
 create table host_services (
-                          id integer,
+                          id serial,
                           host_id integer,
                           service_id integer,
                           active integer default 1,
