@@ -112,5 +112,5 @@ Usage of ./vigilate:
 ## External development Library
 
 - For Database migration Soda CLI: https://gobuffalo.io/documentation/database/soda/
-- Local Pusher Channels HTTP server: https://github.com/dimiro1/ipe
+- Webscoket Local Pusher Channels HTTP server: https://github.com/dimiro1/ipe
 - Bootstrap 4: https://getbootstrap.com/docs/4.0/getting-started/introduction/ 
