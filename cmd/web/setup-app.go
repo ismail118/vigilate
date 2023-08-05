@@ -3,6 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/ismail118/vigilate/internal/channeldata"
@@ -11,10 +16,7 @@ import (
 	"github.com/ismail118/vigilate/internal/handlers"
 	"github.com/ismail118/vigilate/internal/helpers"
 	"github.com/pusher/pusher-http-go"
-	"log"
-	"net/http"
-	"os"
-	"time"
+	"github.com/robfig/cron/v3"
 )
 
 func setupApp() (*string, error) {
@@ -137,6 +139,15 @@ func setupApp() (*string, error) {
 	log.Println("Secure", *pusherSecure)
 
 	app.WsClient = wsClient
+
+	localZone, _ := time.LoadLocation("Local")
+	scheduler := cron.New(cron.WithLocation(localZone), cron.WithChain(
+		cron.DelayIfStillRunning(cron.DefaultLogger),
+		cron.Recover(cron.DefaultLogger),
+	))
+	app.Scheduler = scheduler
+
+
 
 	helpers.NewHelpers(&app)
 

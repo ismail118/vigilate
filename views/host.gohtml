@@ -2,7 +2,9 @@
 
 {{block css()}}
 <style>
-
+    .pointer {
+        cursor: pointer;
+    }
 </style>
 {{end}}
 
@@ -201,7 +203,7 @@ Host
                                                     <td>
                                                         <span class="{{.Service.Icon}}"></span>
                                                         {{.Service.ServiceName}}
-                                                        <span class="badge bg-secondary-dark" onclick="checkNow({{.ID}})">Check Now</span>
+                                                        <span class="badge bg-secondary-dark pointer" onclick="checkNow({{.ID}}, 'healthy')">Check Now</span>
                                                     </td>
                                                     <td>
                                                         {{if dateAfterYearOne(.LastCheck)}}
@@ -240,7 +242,7 @@ Host
                                                     <td>
                                                         <span class="{{.Service.Icon}}"></span>
                                                         {{.Service.ServiceName}}
-                                                        <span class="badge bg-secondary-dark" onclick="checkNow({{.ID}})">Check Now</span>
+                                                        <span class="badge bg-secondary-dark pointer" onclick="checkNow({{.ID}}, 'warning')">Check Now</span>
                                                     </td>
                                                     <td>
                                                         {{if dateAfterYearOne(.LastCheck)}}
@@ -279,7 +281,7 @@ Host
                                                     <td>
                                                         <span class="{{.Service.Icon}}"></span>
                                                         {{.Service.ServiceName}}
-                                                        <span class="badge bg-secondary-dark" onclick="checkNow({{.ID}})">Check Now</span>
+                                                        <span class="badge bg-secondary-dark pointer" onclick="checkNow({{.ID}}, 'problem')">Check Now</span>
                                                     </td>
                                                     <td>
                                                         {{if dateAfterYearOne(.LastCheck)}}
@@ -318,7 +320,7 @@ Host
                                                     <td>
                                                         <span class="{{.Service.Icon}}"></span>
                                                         {{.Service.ServiceName}}
-                                                        <span class="badge bg-secondary-dark" onclick="checkNow({{.ID}})">Check Now</span>
+                                                        <span class="badge bg-secondary-dark pointer" onclick="checkNow({{.ID}}, 'pending')">Check Now</span>
                                                     </td>
                                                     <td>
                                                         {{if dateAfterYearOne(.LastCheck)}}
@@ -415,8 +417,35 @@ Host
             }
         }
 
-        function checkNow(id) {
+        function checkNow(id, oldStatus) {
             console.log("check now "+ id)
+
+            fetch('/admin/perform-check/'+id+'/'+oldStatus)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Ok:", data.ok, "message:", data.message);
+
+                    if (data.ok) {
+                        if (data.old_status !== data.new_status) {
+                            attention.toast({
+                                msg: data.message,
+                                icon: "info",
+                                timer: 6000,
+                                showCloseButton: true,
+                            })
+                        } else {
+                            attention.toast({
+                                msg: "Service is still in "+data.new_status+ " state",
+                                icon: "info",
+                                timer: 5000,
+                                showCloseButton: true,
+                            })
+                        }
+
+                    } else {
+                        errorAlert("Something went wrong")
+                    }
+                });
         }
     </script>
 {{end}}

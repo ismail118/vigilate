@@ -108,6 +108,7 @@ Usage of ./vigilate:
   - Send Email package: https://github.com/xhit/go-simple-mail
   - html to text: https://github.com/jaytaylor/html2text
 - Pusher Channels HTTP go Library: https://github.com/pusher/pusher-http-go
+- For cron Shceduler: https://github.com/robfig/cron
 
 ## External development Library
 

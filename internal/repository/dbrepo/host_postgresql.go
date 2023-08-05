@@ -252,8 +252,8 @@ func (m *postgresDBRepo) GetListHosts() ([]models.Host, error) {
 	return items, nil
 }
 
-// UpdateHostServiceStatus update the active status of host_services
-func (m *postgresDBRepo) UpdateHostServiceStatus(hostID, serviceID, active int) error {
+// UpdateHostServiceActive update the active status of host_services
+func (m *postgresDBRepo) UpdateHostServiceActive(hostID, serviceID, active int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -349,4 +349,83 @@ func (m *postgresDBRepo) GetServicesByStatus(status string) ([]models.Host, erro
 	}
 
 	return items, nil
+}
+
+func (m *postgresDBRepo) GetHostServiceByID(id int) (models.HostService, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	select hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number, hs.schedule_unit, hs.status, 
+	       hs.last_check, hs.updated_at, hs.created_at, 
+	       s.id, s.service_name, s.active, s.icon, s.updated_at, s.created_at
+	from 
+	    host_services hs
+	left join 
+	        services s 
+	    on hs.service_id = s.id
+	where hs.id = $1
+`
+	var hs models.HostService
+	row := m.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&hs.ID,
+		&hs.HostID,
+		&hs.ServiceID,
+		&hs.Active,
+		&hs.ScheduleNumber,
+		&hs.ScheduleUnit,
+		&hs.Status,
+		&hs.LastCheck,
+		&hs.UpdatedAt,
+		&hs.CreatedAt,
+		&hs.Service.ID,
+		&hs.Service.ServiceName,
+		&hs.Service.Active,
+		&hs.Service.Icon,
+		&hs.Service.UpdatedAt,
+		&hs.Service.CreatedAt,
+	)
+	if err != nil {
+		return hs, err
+	}
+
+	return hs, nil
+}
+
+func (m *postgresDBRepo) UpdateHostService(hs models.HostService) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	update host_services 
+	set 
+	    host_id = $1,
+	    service_id = $2,
+	    active = $3,
+	    schedule_number = $4,
+	    schedule_unit = $5,
+	    status = $6,
+	    last_check = $7,
+	    updated_at = $8 
+	where
+	    id = $9
+`
+
+	_, err := m.DB.ExecContext(ctx, query,
+		hs.HostID,
+		hs.ServiceID,
+		hs.Active,
+		hs.ScheduleNumber,
+		hs.ScheduleUnit,
+		hs.Status,
+		hs.LastCheck,
+		hs.UpdatedAt,
+		hs.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

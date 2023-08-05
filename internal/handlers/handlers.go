@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/CloudyKit/jet/v6"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/ismail118/vigilate/internal/config"
 	"github.com/ismail118/vigilate/internal/driver"
 	"github.com/ismail118/vigilate/internal/helpers"
@@ -250,7 +250,7 @@ func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request)
 	serviceID, _ := strconv.Atoi(r.Form.Get("service_id"))
 	active, _ := strconv.Atoi(r.Form.Get("active"))
 
-	err = repo.DB.UpdateHostServiceStatus(hostID, serviceID, active)
+	err = repo.DB.UpdateHostServiceActive(hostID, serviceID, active)
 	if err != nil {
 		log.Println(err)
 		resp.OK = false
