@@ -429,3 +429,58 @@ func (m *postgresDBRepo) UpdateHostService(hs models.HostService) error {
 
 	return nil
 }
+
+func (m *postgresDBRepo) GetServicesToMonitor() ([]models.HostService, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	select hs.id, hs.host_id, hs.service_id, hs.active, hs.schedule_number, hs.schedule_unit, hs.status, 
+	       hs.last_check, hs.updated_at, hs.created_at, 
+	       s.id, s.service_name, s.active, s.icon, s.updated_at, s.created_at
+	from 
+	    host_services hs
+	left join 
+	        services s 
+	    on hs.service_id = s.id
+	where 
+		hs.active = 1
+`
+	items := make([]models.HostService, 0)
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var hs models.HostService
+
+		err := rows.Scan(
+			&hs.ID,
+			&hs.HostID,
+			&hs.ServiceID,
+			&hs.Active,
+			&hs.ScheduleNumber,
+			&hs.ScheduleUnit,
+			&hs.Status,
+			&hs.LastCheck,
+			&hs.UpdatedAt,
+			&hs.CreatedAt,
+			&hs.Service.ID,
+			&hs.Service.ServiceName,
+			&hs.Service.Active,
+			&hs.Service.Icon,
+			&hs.Service.UpdatedAt,
+			&hs.Service.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, hs)
+	}
+
+	return items, nil
+}

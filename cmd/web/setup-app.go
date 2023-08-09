@@ -96,6 +96,7 @@ func setupApp() (*string, error) {
 		Session:      session,
 		InProduction: *inProduction,
 		Domain:       *domain,
+		MonitorMap: make(map[int]cron.EntryID),
 		PusherSecret: *pusherSecret,
 		MailQueue:    mailQueue,
 		Version:      vigilateVersion,
@@ -146,8 +147,11 @@ func setupApp() (*string, error) {
 		cron.Recover(cron.DefaultLogger),
 	))
 	app.Scheduler = scheduler
-
-
+	handlers.Repo.StartMonitoring()
+	if app.PreferenceMap["monitoring_live"] == "1" {
+		// start the scheduler
+		repo.App.Scheduler.Start()
+	}
 
 	helpers.NewHelpers(&app)
 

@@ -12,10 +12,169 @@
 
     let publicChannel = pusher.subscribe("public-channel");
 
-    publicChannel.bind("test-event", function (data) {
-        successAlert(data.message);ç
+    publicChannel.bind("app-starting", function (data) {
+        successAlert(data.message);
     })
 
+    publicChannel.bind("app-stopping", function (data) {
+        warningAlert(data.message);
+    })
+
+    publicChannel.bind("host-service-status-changed", function (data) {
+        attention.toast({
+            msg: data.message,
+            icon: 'info',
+            timer: 30000,
+            showCloseButton: true,
+        })
+
+        // update tables
+        // remove existing table row if it exist
+        let exists = !!document.getElementById("host-service-"+ data.host_service_id);
+        if (exists) {
+            let row = document.getElementById("host-service-"+ data.host_service_id);
+            row.parentNode.removeChild(row);
+        }
+
+        // update the tables, if they exist
+        let tableExists = !!document.getElementById(data.status + "-table");
+        if (tableExists) {
+            console.log("tring update table")
+            let tableRef = document.getElementById(data.status + "-table");
+            let newRow = tableRef.tBodies[0].insertRow(-1);
+
+            newRow.setAttribute("id", "host-service-" + data.host_service_id);
+            
+            // insert the first td
+            let newTd = newRow.insertCell(0);
+            newTd.innerHTML = `
+            <span class="${data.icon}"></span>
+            ${data.service_name}
+            <span class="badge bg-secondary-dark pointer" onclick="checkNow(${data.host_service_id}, '${data.status}')">Check Now</span>
+            `;
+
+            // insert 2nd td
+            newTd = newRow.insertCell(1);
+            if (data.status !== "pending") {
+                newTd.innerHTML = `${data.last_check}`
+            } else {
+                newTd.innerHTML = `Pending...`
+            }
+
+            // insert 3rd td
+            newTd = newRow.insertCell(2);
+            newTd.innerHTML = `${data.message}`
+        }
+
+        // update table for problems page
+        tableExists = !!document.getElementById("problem-page-table");
+        if (tableExists) {
+            if (data.status !== "problem") {
+                let exist = !!document.getElementById("host-service-problem-" + data.host_service_id);
+                if (exist) {
+                    let row = document.getElementById("host-service-problem-" + data.host_service_id);
+                    row.parentNode.removeChild(row);
+                }
+            } else {
+                let problemTable = document.getElementById("problem-page-table");
+
+                addServiceRow(problemTable, data)
+            }
+                
+        }
+
+        // update table for healthy page
+        tableExists = !!document.getElementById("healthy-page-table");
+        if (tableExists) {
+            if (data.status !== "healthy") {
+                let exist = !!document.getElementById("host-service-healthy-" + data.host_service_id);
+                if (exist) {
+                    let row = document.getElementById("host-service-healthy-" + data.host_service_id);
+                    row.parentNode.removeChild(row);
+                }
+            } else {
+                let healthyTable = document.getElementById("healthy-page-table");
+
+                addServiceRow(healthyTable, data)
+            }
+        }
+
+        // update table for pending page
+        tableExists = !!document.getElementById("pending-page-table");
+        if (tableExists) {
+            if (data.status !== "pending") {
+                let exist = !!document.getElementById("host-service-pending-" + data.host_service_id);
+                if (exist) {
+                    let row = document.getElementById("host-service-pending-" + data.host_service_id);
+                    row.parentNode.removeChild(row);
+                }
+            } else {
+                let pendingTable = document.getElementById("pending-page-table");
+
+                addServiceRow(pendingTable, data)
+            }
+        }
+
+        // update table for warning page
+        tableExists = !!document.getElementById("warning-page-table");
+        if (tableExists) {
+            if (data.status !== "warning") {
+                let exist = !!document.getElementById("host-service-warning-" + data.host_service_id);
+                if (exist) {
+                    let row = document.getElementById("host-service-warning-" + data.host_service_id);
+                    row.parentNode.removeChild(row);
+                }
+            } else {
+                let warningTable = document.getElementById("warning-page-table");
+
+                addServiceRow(warningTable, data)
+            }
+        }
+    })
+
+    publicChannel.bind("host-service-count-changed", function (data) {
+        let healthyCountExists = !!document.getElementById("healthy_count");
+        if (healthyCountExists) {
+            document.getElementById("healthy_count").innerHTML = data.healthy_count;
+            document.getElementById("problem_count").innerHTML = data.problem_count;
+            document.getElementById("warning_count").innerHTML = data.warning_count;
+            document.getElementById("pending_count").innerHTML = data.pending_count;
+        }
+    })
+
+    // events things we want to look for
+    // - service goes down
+    // - service goes up
+    // - service status changed
+    // - scheduled changed
+    // - monitoring is turned off
+    // - next-run-event
+    // - schedule-changed-event
+    // - 
+
+    function addServiceRow(table, data) {
+        let newRow = table.tBodies[0].insertRow(-1);
+
+        newRow.setAttribute("id", "host-service-" + data.status + "-" + data.host_service_id);
+        
+        // insert the first td
+        let newTd = newRow.insertCell(0);
+        newTd.innerHTML = `
+        <a href="/admin/host/${data.host_id}#${data.status}-content">${data.host_name}</a>
+        `;
+
+        // insert 2nd td
+        newTd = newRow.insertCell(1);
+        newTd.innerHTML = `${data.service_name}`
+
+        // insert 3rd td
+        newTd = newRow.insertCell(2);
+        newTd.innerHTML = `<span class="badge bg-secondary-dark">${data.status}</span>`
+
+        newTd = newRow.insertCell(3);
+        newTd.innerHTML = `${data.message}`
+    }
+    
     let attention = Prompt();
 
     {{if .Flash != ""}}
@@ -29,4 +188,64 @@
     {{if .Error != ""}}
         errorAlert('{{.Error}}')
     {{end}}
+
+    document.getElementById("monitoring-live").addEventListener("change", function() {
+        let enabled = document.getElementById("monitoring-live").checked;
+        if (!enabled) {
+            attention.confirm({
+                html: "This will stop monitoring of all host and services. Are you sure?",
+                callback: function(result) {
+                    if (result) {
+                        // want to turn monitoring off
+                        updateSystemPref("monitoring_live","0")
+                        toggleMonitoring(0)
+                    } else {
+                        document.getElementById("monitoring-live").checked = true
+                    }
+                }
+            })
+        } else {
+            updateSystemPref("monitoring_live","1")
+            toggleMonitoring(1)
+        }
+    });
+
+    function updateSystemPref(prefName, prefValue) {
+        let formData = new FormData;
+        formData.append("pref_name", prefName);
+        formData.append("pref_value", prefValue);
+        formData.append("csrf_token", "{{.CSRFToken}}")
+
+        let ajax = new XMLHttpRequest();
+        ajax.responseType = "json";
+        ajax.open("POST", "/admin/preference/ajax/set-system-pref")
+        ajax.send(formData);
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState === 4) {
+                let resp = ajax.response;
+                if (!resp.ok) {
+                    errorAlert("Errors: "+ resp.message);
+                }
+            }
+        }
+    }
+
+    function toggleMonitoring(enabled) {
+        let formData = new FormData;
+        formData.append("enabled", enabled);
+        formData.append("csrf_token", "{{.CSRFToken}}")
+
+        let ajax = new XMLHttpRequest();
+        ajax.responseType = "json";
+        ajax.open("POST", "/admin/preference/ajax/toggle-monitoring")
+        ajax.send(formData);
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState === 4) {
+                let resp = ajax.response;
+                if (!resp.ok) {
+                    errorAlert("Errors: "+ resp.message);
+                }
+            }
+        }
+    }
 </script>

@@ -22,8 +22,6 @@ func routes() http.Handler {
 
 	mux.Get("/user/logout", handlers.Repo.Logout)
 
-	mux.Get("/pusher-test", handlers.Repo.TestPusher)
-
 	// ws endpoint
 	mux.Route("/pusher", func(mux chi.Router) {
 		mux.Use(Auth)
@@ -67,6 +65,11 @@ func routes() http.Handler {
 		mux.Post("/host/{id}", handlers.Repo.PostHost)
 		mux.Post("/host/ajax/toggle-service", handlers.Repo.ToggleServiceForHost)
 		mux.Get("/perform-check/{id}/{oldStatus}", handlers.Repo.TestCheck)
+
+		// Preference
+		mux.Post("/preference/ajax/set-system-pref", handlers.Repo.SetSystemPref)
+		mux.Post("/preference/ajax/toggle-monitoring", handlers.Repo.ToggleMonitoring)
+
 	})
 
 	// static files

@@ -25,7 +25,7 @@
     <div class="row">
         <div class="col">
 
-            <table class="table table-condensed table-striped">
+            <table id="pending-page-table" class="table table-condensed table-striped">
                 <thead>
                     <tr>
                         <th>Host</th>
@@ -39,7 +39,7 @@
                     {{range hosts}}
                         {{hostName := .HostName}}
                         {{range .HostServices}}
-                        <tr>
+                        <tr id="host-service-{{.Status}}-{{.ID}}"> 
                             <td>
                                 <a href="/admin/host/{{.HostID}}#pending-content">{{hostName}}</a>
                             </td>

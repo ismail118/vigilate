@@ -85,3 +85,20 @@ func (m *postgresDBRepo) InsertOrUpdateSitePreferences(pm map[string]string) err
 
 	return nil
 }
+
+// SetSystemPref updates a system preference setting
+func (m *postgresDBRepo) UpdateSystemPref(name, value string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		update preferences set preference = $1, updated_at = $2 where name = $3
+		`
+	_, err := m.DB.ExecContext(ctx, query, value, time.Now(), name)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
