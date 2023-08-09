@@ -96,7 +96,7 @@ func setupApp() (*string, error) {
 		Session:      session,
 		InProduction: *inProduction,
 		Domain:       *domain,
-		MonitorMap: make(map[int]cron.EntryID),
+		MonitorMap:   make(map[int]cron.EntryID),
 		PusherSecret: *pusherSecret,
 		MailQueue:    mailQueue,
 		Version:      vigilateVersion,

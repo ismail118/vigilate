@@ -362,7 +362,7 @@ func (m *postgresDBRepo) GetHostServiceByID(id int) (models.HostService, error) 
 	from 
 	    host_services hs
 	left join 
-	        services s 
+	    services s 
 	    on hs.service_id = s.id
 	where hs.id = $1
 `
