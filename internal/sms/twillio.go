@@ -37,7 +37,7 @@ func SendTextTwillio(to, msg string, app *config.AppConfig) error {
 	if resp.StatusCode >= 200  && resp.StatusCode < 300 {
 		var data map[string]interface{} 
 		decoder := json.NewDecoder(resp.Body)
-		err := decoder.Decode(data)
+		err := decoder.Decode(&data)
 		if err != nil {
 			log.Panicln(err)
 			return err
