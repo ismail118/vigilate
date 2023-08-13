@@ -3,13 +3,18 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/ismail118/vigilate/internal/models"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/ismail118/vigilate/internal/channeldata"
+	"github.com/ismail118/vigilate/internal/helpers"
+	"github.com/ismail118/vigilate/internal/models"
+	"github.com/ismail118/vigilate/internal/sms"
 )
 
 const (
@@ -273,11 +278,63 @@ func (repo *DBRepo) testServiceForHost(h models.Host, hs models.HostService) (st
 		if err != nil {
 			log.Println(err)
 		}
+
+		// send email
+		if repo.App.PreferenceMap["notify_via_email"] == "1" {
+			if hs.Status != "pending" {
+				mm := channeldata.MailData{
+					ToName: repo.App.PreferenceMap["notify_name"],
+					ToAddress: repo.App.PreferenceMap["notify_email"],
+				}
+				switch newStatus {
+				case "healthy": 
+					mm.Subject = fmt.Sprintf("HEALTHY: service %s on %s", hs.Service.ServiceName, h.HostName)
+					mm.Content = template.HTML(fmt.Sprintf(`
+					<p>Service %s on %s reported healthy status </p>
+					<p><strong>Message recieved: %s </strong></p>
+					`, hs.Service.ServiceName, h.HostName, msg))
+				case "problem":
+					mm.Subject = fmt.Sprintf("PROBLEM: service %s on %s", hs.Service.ServiceName, h.HostName)
+					mm.Content = template.HTML(fmt.Sprintf(`
+					<p>Service %s on %s reported problem status </p>
+					<p><strong>Message recieved: %s </strong></p>
+					`, hs.Service.ServiceName, h.HostName, msg))
+				case "warning":
+					mm.Subject = fmt.Sprintf("WARNING: service %s on %s", hs.Service.ServiceName, h.HostName)
+					mm.Content = template.HTML(fmt.Sprintf(`
+					<p>Service %s on %s reported warning status </p>
+					<p><strong>Message recieved: %s </strong></p>
+					`, hs.Service.ServiceName, h.HostName, msg))
+				}
+
+				helpers.SendEmail(mm)
+			}
+		}
+
+		// send sms
+		if repo.App.PreferenceMap["notify_via_sms"] == "1" {
+			to := repo.App.PreferenceMap["sms_notify_number"]
+			smsMessage := ""
+
+			switch newStatus {
+				case "healthy": 
+					smsMessage = fmt.Sprintf("Service %s on %s is healthy", hs.Service.ServiceName, h.HostName)
+				case "problem":
+					smsMessage = fmt.Sprintf("Service %s on %s is report problem: %s", hs.Service.ServiceName, h.HostName, msg)
+				case "warning":
+					smsMessage = fmt.Sprintf("Service %s on %s is report problem: %s", hs.Service.ServiceName, h.HostName, msg)
+			}
+
+			err := sms.SendTextTwillio(to, smsMessage, app)
+			if err != nil {
+				log.Println(err)
+			}
+
+		}
 	}
 
 	repo.pushScheduleChangedEvent(hs, newStatus)
 
-	//TODO: if appropriate send email or sms message
 	return newStatus, msg
 }
 

@@ -20,3 +20,6 @@ build_ws:
 
 run_ipe:
 	docker run -d --name ipe -p 4001:4001 ipe:1.0.0
+
+run_mailhog:
+	mailhog
