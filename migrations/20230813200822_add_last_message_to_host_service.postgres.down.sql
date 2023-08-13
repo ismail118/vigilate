@@ -1,0 +1,1 @@
+alter table host_services drop column last_message;

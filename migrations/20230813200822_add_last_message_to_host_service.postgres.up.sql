@@ -1,0 +1,1 @@
+alter table host_services add column last_message varchar default '';

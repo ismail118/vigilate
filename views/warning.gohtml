@@ -48,11 +48,7 @@
                             <span class="badge bg-secondary-dark">{{.Status}}</span>
                         </td>
                         <td>
-                            {{if .Active == 1}}
-                            <span class="badge bg-success">Active</span>
-                            {{else}}
-                            <span class="badge bg-danger">Inactive</span>
-                            {{end}}
+                            {{.LastMessage}}
                         </td>
                     </tr>
                     {{end}}
