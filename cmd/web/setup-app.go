@@ -139,7 +139,7 @@ func setupApp() (*string, error) {
 	log.Println("Host", fmt.Sprintf("%s:%s", *pusherHost, *pusherPort))
 	log.Println("Secure", *pusherSecure)
 
-	app.WsClient = wsClient
+	app.WsClient = &wsClient
 
 	localZone, _ := time.LoadLocation("Local")
 	scheduler := cron.New(cron.WithLocation(localZone), cron.WithChain(

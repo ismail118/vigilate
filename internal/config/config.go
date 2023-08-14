@@ -1,12 +1,13 @@
 package config
 
 import (
+	"html/template"
+
 	"github.com/alexedwards/scs/v2"
 	"github.com/ismail118/vigilate/internal/channeldata"
 	"github.com/ismail118/vigilate/internal/driver"
-	"github.com/pusher/pusher-http-go"
+	"github.com/ismail118/vigilate/internal/models"
 	"github.com/robfig/cron/v3"
-	"html/template"
 )
 
 // AppConfig holds application configuration
@@ -18,7 +19,7 @@ type AppConfig struct {
 	MonitorMap    map[int]cron.EntryID
 	PreferenceMap map[string]string
 	Scheduler     *cron.Cron
-	WsClient      pusher.Client
+	WsClient      models.WsClient
 	PusherSecret  string
 	TemplateCache map[string]*template.Template
 	MailQueue     chan channeldata.MailJob
